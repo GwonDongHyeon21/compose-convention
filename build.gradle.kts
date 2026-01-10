@@ -19,15 +19,6 @@ dependencies {
     testImplementation("org.junit.jupiter:junit-jupiter:5.10.0")
 }
 
-gradlePlugin {
-    plugins {
-        create("myComposeConvention") {
-            id = "com.gwondh.compose.code-convention"
-            implementationClass = "com.gwondh.customcodeconvention.CustomCodeConvention"
-        }
-    }
-}
-
 publishing {
     publications {
         create<MavenPublication>("maven") {
