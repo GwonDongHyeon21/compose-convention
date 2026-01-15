@@ -43,7 +43,7 @@ val updateDetektConfig by tasks.registering {
             if (!configDir.exists()) configDir.mkdirs()
 
             val rawUrl =
-                "https://raw.githubusercontent.com/GwonDongHyeon21/compose-convention/refs/heads/dev/ide-setup.gradle.kts"
+                "https://raw.githubusercontent.com/GwonDongHyeon21/compose-convention/refs/heads/dev/detekt.yml"
 
             runCatching {
                 configFile.writeBytes(URI(rawUrl).toURL().readBytes())
