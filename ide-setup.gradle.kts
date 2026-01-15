@@ -1,64 +1,66 @@
 import java.net.URI
 
-// JAR 파일 복사
-val updateDetektJar by tasks.registering(Copy::class) {
+val detektConfigDir = project.rootProject.file("config/detekt")
+val detektRulesDir = detektConfigDir.resolve("rules")
+val versionFile = detektConfigDir.resolve("version.txt")
+val configFile = detektConfigDir.resolve("detekt.yml")
+
+val setupDetekt by tasks.registering {
     group = "verification"
-    description = "Copies custom detekt rules. Automatically updates when version changes."
-
-    val rulesDir = project.rootProject.file("config/detekt/rules")
-    val detektConfig = project.configurations.getByName("detektPlugins")
-
-    from(detektConfig)
-    include("*compose-convention*")
-
-    into(rulesDir)
-    rename { "custom-rules.jar" }
-
-    duplicatesStrategy = DuplicatesStrategy.INCLUDE
-}
-
-// YML 파일 업데이트
-val updateDetektConfig by tasks.registering {
-    group = "verification"
-    description = "Downloads detekt.yml if version changed or file is missing."
-
-    val configDir = project.rootProject.file("config/detekt")
-    val detektConfig = project.configurations.getByName("detektPlugins")
-
-    val configFile = File(configDir, "detekt.yml")
-    val versionFile = File(configDir, "version.txt")
+    description = "Updates detekt rules (JAR & YML) if the dependency version changes."
 
     doLast {
-        val artifact = detektConfig.resolvedConfiguration.resolvedArtifacts.find {
-            it.name.contains("compose-convention") || it.moduleVersion.id.name.contains("compose-convention")
+        val artifact = project
+            .configurations
+            .getByName("detektPlugins")
+            .resolvedConfiguration.resolvedArtifacts.find {
+                it.name.contains("compose-convention") || it.moduleVersion.id.name.contains("compose-convention")
+            }
+
+        if (artifact == null) {
+            logger.warn("'compose-convention' 라이브러리를 찾을 수 없습니다. detektPlugins에 추가되었는지 확인하세요.")
+            return@doLast
         }
 
-        val currentVersion = artifact?.moduleVersion?.id?.version ?: "dev"
+        val currentVersion = artifact.moduleVersion.id.version
         val savedVersion = if (versionFile.exists()) versionFile.readText().trim() else ""
 
-        if (currentVersion != savedVersion || !configFile.exists()) {
-            println("[Auto-Setup] New version detected! ($savedVersion -> $currentVersion)")
-            println("Updating detekt.yml...")
+        // 버전이 다르거나, 필수 파일이 없으면 업데이트 실행
+        if (currentVersion != savedVersion || !configFile.exists() || !detektRulesDir.exists()) {
+            println("[Detekt Setup] 새로운 버전 감지! ($savedVersion -> $currentVersion)")
+            println("업데이트를 진행합니다...")
 
-            if (!configDir.exists()) configDir.mkdirs()
+            if (!detektRulesDir.exists()) detektRulesDir.mkdirs()
 
+            // JAR 파일 복사
+            val jarFile = artifact.file
+            val targetJar = detektRulesDir.resolve("custom-rules.jar")
+
+            try {
+                jarFile.copyTo(targetJar, overwrite = true)
+                println("JAR 파일 업데이트 완료: ${targetJar.name}")
+            } catch (e: Exception) {
+                println("JAR 복사 실패: ${e.message}")
+            }
+
+            // YML 파일 다운로드
             val rawUrl =
                 "https://raw.githubusercontent.com/GwonDongHyeon21/compose-convention/refs/heads/dev/detekt.yml"
 
             runCatching {
                 configFile.writeBytes(URI(rawUrl).toURL().readBytes())
-                versionFile.writeText(currentVersion)
-                println("detekt.yml updated successfully to version $currentVersion")
+                println("detekt.yml 다운로드 완료")
             }.onFailure {
-                println("Update failed: ${it.message}")
+                println("detekt.yml 다운로드 실패 (기존 파일 유지): ${it.message}")
             }
-        } else {
-            println("[Auto-Setup] detekt.yml is up-to-date ($currentVersion).")
+
+            versionFile.writeText(currentVersion)
+            println("Detekt 설정이 버전 $currentVersion (으)로 업데이트 되었습니다.\n")
+
         }
     }
 }
 
 tasks.named("preBuild").configure {
-    dependsOn(updateDetektJar)
-    dependsOn(updateDetektConfig)
+    dependsOn(setupDetekt)
 }
