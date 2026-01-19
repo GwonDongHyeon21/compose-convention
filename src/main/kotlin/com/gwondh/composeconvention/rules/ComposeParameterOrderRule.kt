@@ -1,5 +1,8 @@
 package com.gwondh.composeconvention.rules
 
+import com.gwondh.composeconvention.util.String.COMPOSABLE
+import com.gwondh.composeconvention.util.String.MODIFIER
+import com.gwondh.composeconvention.util.String.PREVIEW
 import io.gitlab.arturbosch.detekt.api.CodeSmell
 import io.gitlab.arturbosch.detekt.api.Config
 import io.gitlab.arturbosch.detekt.api.Debt
@@ -117,13 +120,5 @@ class ComposeParameterOrderRule(config: Config) : Rule(config) {
 
     private fun getErrorMessage(expected: ParamState, actual: ParamState): String {
         return "순서 위반: ${expected.name} 뒤에 ${actual.name}가 올 수 없습니다."
-    }
-
-    private fun KtNamedFunction.hasAnnotation(name: String): Boolean =
-        annotationEntries.any { it.shortName?.asString() == name }
-
-    companion object {
-        const val MODIFIER = "modifier"
-        const val COMPOSABLE = "@Composable"
     }
 }
