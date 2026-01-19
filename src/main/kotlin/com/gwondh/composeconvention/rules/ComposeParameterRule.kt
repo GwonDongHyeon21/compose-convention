@@ -27,7 +27,7 @@ private enum class ParamState {
     OPTIONAL_SLOT   // 선택 컴포저블
 }
 
-class ComposeParameterOrderRule(config: Config) : Rule(config) {
+class ComposeParameterRule(config: Config) : Rule(config) {
 
     override val issue = Issue(
         id = javaClass.simpleName,

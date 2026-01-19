@@ -5,9 +5,9 @@ import io.gitlab.arturbosch.detekt.test.compileAndLint
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
 
-class ComposeParameterOrderRuleTest {
+class ComposeParameterRuleTest {
 
-    private val rule = ComposeParameterOrderRule(Config.empty)
+    private val rule = ComposeParameterRule(Config.empty)
 
     // =========================================================================
     // 1. 성공 케이스 (Golden Path)

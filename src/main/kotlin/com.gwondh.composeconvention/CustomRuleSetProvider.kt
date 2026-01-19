@@ -1,6 +1,6 @@
 package com.gwondh.composeconvention
 
-import com.gwondh.composeconvention.rules.ComposeParameterOrderRule
+import com.gwondh.composeconvention.rules.ComposeParameterRule
 import io.gitlab.arturbosch.detekt.api.Config
 import io.gitlab.arturbosch.detekt.api.RuleSet
 import io.gitlab.arturbosch.detekt.api.RuleSetProvider
@@ -12,7 +12,7 @@ class CustomRuleSetProvider : RuleSetProvider {
     override fun instance(config: Config): RuleSet {
         return RuleSet(
             id = ruleSetId,
-            rules = listOf(ComposeParameterOrderRule(config))
+            rules = listOf(ComposeParameterRule(config))
         )
     }
 }
