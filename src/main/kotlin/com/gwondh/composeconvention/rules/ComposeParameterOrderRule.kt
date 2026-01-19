@@ -1,5 +1,6 @@
 package com.gwondh.composeconvention.rules
 
+import com.gwondh.composeconvention.annotation.isIgnored
 import com.gwondh.composeconvention.util.String.COMPOSABLE
 import com.gwondh.composeconvention.util.String.MODIFIER
 import com.gwondh.composeconvention.util.String.PREVIEW
@@ -37,7 +38,9 @@ class ComposeParameterOrderRule(config: Config) : Rule(config) {
 
     override fun visitNamedFunction(function: KtNamedFunction) {
         super.visitNamedFunction(function)
-        if (!function.hasAnnotation("Composable")) return
+
+        if (!function.hasAnnotation(COMPOSABLE)) return
+        if (function.isIgnored()) return
 
         val parameters = function.valueParameters
 
