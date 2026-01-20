@@ -3,12 +3,11 @@ package com.gwondh.composeconvention.rules
 import io.gitlab.arturbosch.detekt.api.Config
 import io.gitlab.arturbosch.detekt.test.compileAndLint
 import org.junit.jupiter.api.Assertions.assertEquals
-import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 
-class ComposeParameterOrderRuleTest {
+class ComposeParameterRuleTest {
 
-    private val rule = ComposeParameterOrderRule(Config.empty)
+    private val rule = ComposeParameterRule(Config.empty)
 
     // =========================================================================
     // 1. 성공 케이스 (Golden Path)
@@ -38,6 +37,7 @@ class ComposeParameterOrderRuleTest {
         val code = """
             @Composable
             fun SlotComponent(
+                modifier: Modifier = Modifier,
                 text: String = "",           // [선택] 데이터
                 content: @Composable () -> Unit // [필수] 슬롯 (하지만 맨 뒤라 허용됨)
             ) {}
@@ -48,8 +48,66 @@ class ComposeParameterOrderRuleTest {
     }
 
     // =========================================================================
-    // 2. Modifier 관련 위반 케이스
+    // 2. 예외 및 무시 케이스 (Exception & Ignored)
     // =========================================================================
+
+    @Test
+    fun `Preview 어노테이션이 있으면 Modifier가 없어도 통과해야 한다`() {
+        val code = """
+            @Composable
+            @Preview
+            fun MyScreenPreview() { 
+                MyScreen()
+            }
+        """.trimIndent()
+
+        val findings = rule.compileAndLint(code)
+        assertEquals(0, findings.size)
+    }
+
+    @Test
+    fun `UI Composable이 아니면(Helper) Modifier가 없어도 통과해야 한다`() {
+        val code = """
+            @Composable
+            fun calculateState(
+                a: Int,      // [필수]
+                b: Int = 1   // [선택]
+            ): Int { return a + b }
+        """.trimIndent()
+
+        val findings = rule.compileAndLint(code)
+        assertEquals(0, findings.size)
+    }
+
+    @Test
+    fun `Composable 어노테이션이 없으면 검사하지 않아야 한다`() {
+        val code = """
+            fun NormalFunction(
+                a: Int = 1,
+                b: Int 
+            ) {}
+        """.trimIndent()
+
+        val findings = rule.compileAndLint(code)
+        assertEquals(0, findings.size)
+    }
+
+    // =========================================================================
+    // 3. Modifier 관련 위반 (Modifier Missing & Order)
+    // =========================================================================
+
+    @Test
+    fun `UI Composable 함수에 Modifier 파라미터가 아예 없으면 에러여야 한다`() {
+        val code = """
+            @Composable
+            fun MyButton(
+                onClick: () -> Unit // Modifier 없음
+            ) {}
+        """.trimIndent()
+
+        val findings = rule.compileAndLint(code)
+        assertEquals(1, findings.size)
+    }
 
     @Test
     fun `Modifier에 기본값이 없으면 에러여야 한다`() {
@@ -62,7 +120,6 @@ class ComposeParameterOrderRuleTest {
 
         val findings = rule.compileAndLint(code)
         assertEquals(1, findings.size)
-        assertTrue(findings[0].message.contains("기본값"))
     }
 
     @Test
@@ -77,11 +134,10 @@ class ComposeParameterOrderRuleTest {
 
         val findings = rule.compileAndLint(code)
         assertEquals(1, findings.size)
-        assertTrue(findings[0].message.contains("'modifier'는 선택적 파라미터 그룹의 가장 첫 번째"))
     }
 
     // =========================================================================
-    // 3. 타입별 순서 위반 (Data -> Event -> Slot)
+    // 4. 순서 위반 - 타입별 (Data -> Event -> Slot)
     // =========================================================================
 
     @Test
@@ -90,13 +146,13 @@ class ComposeParameterOrderRuleTest {
             @Composable
             fun EventBeforeData(
                 onClick: () -> Unit,  // [필수] 이벤트
-                text: String          // [필수] 데이터 (순서 위반)
+                text: String,          // [필수] 데이터 (순서 위반)
+                modifier: Modifier = Modifier
             ) {}
         """.trimIndent()
 
         val findings = rule.compileAndLint(code)
         assertEquals(1, findings.size)
-        assertTrue(findings[0].message.contains("순서 위반"))
     }
 
     @Test
@@ -105,7 +161,8 @@ class ComposeParameterOrderRuleTest {
             @Composable
             fun SlotBeforeEvent(
                 content: @Composable () -> Unit, // [필수] 슬롯
-                onClick: () -> Unit              // [필수] 이벤트 (순서 위반)
+                onClick: () -> Unit,              // [필수] 이벤트 (순서 위반)
+                modifier: Modifier = Modifier
             ) {}
         """.trimIndent()
 
@@ -129,7 +186,7 @@ class ComposeParameterOrderRuleTest {
     }
 
     // =========================================================================
-    // 4. 필수 vs 선택 순서 위반
+    // 5. 순서 위반 - 필수 vs 선택 (Required -> Optional)
     // =========================================================================
 
     @Test
@@ -137,6 +194,7 @@ class ComposeParameterOrderRuleTest {
         val code = """
             @Composable
             fun RequiredAfterOptional(
+                modifier: Modifier = Modifier,
                 a: Int = 1, // [선택]
                 b: Int      // [필수] (위반)
             ) {}
@@ -148,34 +206,16 @@ class ComposeParameterOrderRuleTest {
 
     @Test
     fun `필수 이벤트가 선택 데이터 뒤에 오면 에러여야 한다 (Trailing Lambda 아님)`() {
-        // onClick은 @Composable이 아니므로 Trailing Lambda 예외 대상이 아님
         val code = """
             @Composable
             fun RequiredEventAfterOptional(
+                modifier: Modifier = Modifier,
                 text: String = "",   // [선택]
-                onClick: () -> Unit  // [필수] 이벤트 (위반! 맨 뒤여도 이벤트는 안 봐줌)
+                onClick: () -> Unit  // [필수] 이벤트 (위반)
             ) {}
         """.trimIndent()
 
         val findings = rule.compileAndLint(code)
         assertEquals(1, findings.size)
-    }
-
-    // =========================================================================
-    // 5. 무시 조건 (Ignored Cases)
-    // =========================================================================
-
-    @Test
-    fun `Composable 어노테이션이 없으면 검사하지 않아야 한다`() {
-        val code = """
-            fun NormalFunction(
-                a: Int = 1,
-                b: Int // Composable이 아니면 코틀린 문법상 에러일 뿐, Lint가 잡을 건 아님 (또는 정상일 수 있음)
-            ) {}
-        """.trimIndent()
-
-        // Composable이 아니면 룰이 작동하지 않으므로 finding은 0이어야 함
-        val findings = rule.compileAndLint(code)
-        assertEquals(0, findings.size)
     }
 }

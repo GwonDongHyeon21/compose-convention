@@ -57,7 +57,7 @@ output-reports:
 
 custom-rules:
   active: true
-  ComposeParameterOrderRule:
+  ComposeParameterRule:
     active: true
 
 comments:
