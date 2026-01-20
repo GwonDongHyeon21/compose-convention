@@ -30,19 +30,14 @@ val setupDetekt by tasks.registering {
             println("[Detekt Setup] 새로운 버전 감지! ($savedVersion -> $currentVersion)")
             println("업데이트를 진행합니다...")
 
-            // 폴더가 없으면 생성
-            if (!detektRulesDir.exists()) {
-                detektRulesDir.mkdirs()
-            } else {
-                detektRulesDir.listFiles()?.forEach { it.delete() }
-            }
+            if (!detektRulesDir.exists()) detektRulesDir.mkdirs()
 
-            // JAR 파일 복사 (원본 이름 그대로 사용)
-            val sourceJar = artifact.file
-            val targetJar = detektRulesDir.resolve(sourceJar.name)
+            // JAR 파일 복사
+            val jarFile = artifact.file
+            val targetJar = detektRulesDir.resolve("custom-rules.jar")
 
             try {
-                sourceJar.copyTo(targetJar, overwrite = true)
+                jarFile.copyTo(targetJar, overwrite = true)
                 println("JAR 파일 업데이트 완료: ${targetJar.name}")
             } catch (e: Exception) {
                 println("JAR 복사 실패: ${e.message}")
@@ -61,6 +56,7 @@ val setupDetekt by tasks.registering {
 
             versionFile.writeText(currentVersion)
             println("Detekt 설정이 버전 $currentVersion (으)로 업데이트 되었습니다.\n")
+
         }
     }
 }

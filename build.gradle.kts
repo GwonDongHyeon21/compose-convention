@@ -5,7 +5,7 @@ plugins {
 }
 
 group = "com.gwondh.convention"
-version = "1.3.0"
+version = "1.0.1"
 
 dependencies {
     compileOnly("com.android.tools.build:gradle:8.2.0")
