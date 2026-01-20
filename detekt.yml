@@ -59,6 +59,8 @@ custom-rules:
   active: true
   ComposeParameterRule:
     active: true
+  ComposePreviewRule:
+    active: true
 
 comments:
   active: false
