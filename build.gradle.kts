@@ -5,7 +5,7 @@ plugins {
 }
 
 group = "com.gwondh.convention"
-version = "1.2.0"
+version = "1.2.1"
 
 dependencies {
     compileOnly("com.android.tools.build:gradle:8.2.0")
@@ -19,13 +19,17 @@ dependencies {
     testImplementation("org.junit.jupiter:junit-jupiter:5.10.0")
 }
 
+java {
+    withSourcesJar()
+}
+
 publishing {
     publications {
         create<MavenPublication>("maven") {
             from(components["java"])
 
             groupId = project.group.toString()
-            artifactId = "convention-compose"
+            artifactId = "compose-convention"
             version = project.version.toString()
         }
     }
