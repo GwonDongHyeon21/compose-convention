@@ -19,13 +19,17 @@ dependencies {
     testImplementation("org.junit.jupiter:junit-jupiter:5.10.0")
 }
 
+java {
+    withSourcesJar()
+}
+
 publishing {
     publications {
         create<MavenPublication>("maven") {
             from(components["java"])
 
             groupId = project.group.toString()
-            artifactId = "convention-compose"
+            artifactId = "compose-convention"
             version = project.version.toString()
         }
     }
