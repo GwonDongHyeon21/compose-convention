@@ -19,5 +19,5 @@ dependencyResolutionManagement {
     }
 }
 
-rootProject.name = "ComposeConvention"
+rootProject.name = "compose-convention"
 include(":src")
