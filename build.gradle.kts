@@ -5,7 +5,7 @@ plugins {
 }
 
 group = "com.gwondh.convention"
-version = "1.2.1"
+version = "1.2.2"
 
 dependencies {
     compileOnly("com.android.tools.build:gradle:8.2.0")
@@ -17,10 +17,6 @@ dependencies {
     // Test
     testImplementation("io.gitlab.arturbosch.detekt:detekt-test:1.23.4")
     testImplementation("org.junit.jupiter:junit-jupiter:5.10.0")
-}
-
-java {
-    withSourcesJar()
 }
 
 publishing {
